@@ -20,6 +20,7 @@ const LEFTOVERS = [
   "StyleBook",
   "Homestead",
   "North Light",
+  "Northlight Consulting",
   "Meridian",
   "product designer",
   "Product Designer",
@@ -110,4 +111,26 @@ console.log(
     ? "\nAll local links resolve."
     : `\n${broken} broken reference(s).`,
 );
-process.exit(broken === 0 && leftovers.size === 0 ? 0 : 1);
+
+const CMS_BLOBS = [
+  "js/hu3yniggg-chunk-default-0.framercms",
+  "js/hu3yniggg-indexes-default-0.framercms",
+  "js/d8jd2hbse-chunk-default-0.framercms",
+  "js/d8jd2hbse-indexes-default-0.framercms",
+];
+
+let cmsMismatch = 0;
+for (const rel of CMS_BLOBS) {
+  const src = join(ROOT, "_original-export", rel);
+  const out = join(ROOT, rel);
+  const a = readFileSync(src);
+  const b = readFileSync(out);
+  if (!a.equals(b)) {
+    console.log(`CMS blob was rewritten: ${rel} (${b.length} vs ${a.length} bytes)`);
+    console.log("  The page bundles address these by hardcoded byte offsets, so this");
+    console.log("  breaks CMS reads on every client-side navigation.");
+    cmsMismatch += 1;
+  }
+}
+
+process.exit(broken === 0 && leftovers.size === 0 && cmsMismatch === 0 ? 0 : 1);

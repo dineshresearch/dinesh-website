@@ -853,6 +853,10 @@ SCOPED_JS = {
         ("children:`Meridian Health`", "children:`JPMorgan Chase`"),
         ("children:`Northlight Consulting`", "children:`Toshiba Software`"),
         ("children:`Homestead`", "children:`Tata Consultancy Services`"),
+        # The logo strip below the timeline lists the four projects, not the
+        # employers. Its template value is the same company name, so it needs
+        # the fourth case study rather than a company.
+        ("xLqLyNMp1:`Northlight Consulting`", "xLqLyNMp1:`LLM Analysis Pipeline`"),
     ],
     "index.html": [
         ("children:`Available for thoughtful projects`",
@@ -1407,7 +1411,11 @@ def apply_bytes(path, data):
     pairs = SCOPED.get(page, []) + SCOPED_JS.get(page, []) + SHARED
 
     if path.endswith(".framercms"):
-        return _sub_tlv(data, pairs)
+        # Deliberately not rewritten. The page bundles address these blobs by
+        # hardcoded byte offsets (from:N,to:N), so changing a single string
+        # length shifts every offset after it and the CMS read fails with
+        # "Missing data" on every client-side navigation.
+        return data
 
     text = data.decode("utf-8", errors="surrogateescape")
     text = _sub(text, pairs)

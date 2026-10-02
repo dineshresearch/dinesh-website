@@ -58,6 +58,12 @@ node tools\browser-check.mjs    # headless-Chrome pass over every route
 - `/play-ground` was removed from the build, the search index and the nav. The
   SSR nav anchor is stripped in `tools/content.py`; the client-rendered copy is
   hidden by CSS.
+- The `.framercms` blobs in `js/` are copied through byte-for-byte and are never
+  rewritten. The page bundles address them with hardcoded byte offsets
+  (`from:N,to:N`), so changing one string length shifts every later offset and
+  the CMS read fails with "Missing data" on every client-side navigation. The
+  copy for CMS-backed content therefore has to live in the HTML and the page
+  modules, not in the blobs.
 - Four case-study detail pages are generated outside Framer's router. A capture
   -phase click interceptor in `js/rerouter.js` (`STATIC_NAV`) forces a full page
   load for them instead of letting the SPA router fail.

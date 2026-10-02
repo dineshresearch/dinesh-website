@@ -74,6 +74,21 @@ function resolve(urlPath) {
   return null;
 }
 
+/**
+ * Framer's CMS loader fetches its .framercms blobs as byte slices, asking for
+ * "?range=start-end". It then does `new Uint8Array(declaredLength)` and copies
+ * the response in, so the server has to return exactly the requested window or
+ * the router dies on every client-side navigation.
+ */
+function rangeOf(url, size) {
+  const match = /[?&]range=(\d+)-(\d+)/.exec(url || "");
+  if (!match) return null;
+  const start = Number(match[1]);
+  const end = Math.min(Number(match[2]), size - 1);
+  if (start >= size || start > end) return null;
+  return { start, end };
+}
+
 const server = createServer((req, res) => {
   const file = resolve(req.url || "/");
 
@@ -97,9 +112,23 @@ const server = createServer((req, res) => {
     return;
   }
 
+  const range = rangeOf(req.url, size);
+  if (range) {
+    res.writeHead(206, {
+      "content-type": type,
+      "content-length": range.end - range.start + 1,
+      "content-range": `bytes ${range.start}-${range.end}/${size}`,
+      "accept-ranges": "bytes",
+      "cache-control": "no-cache",
+    });
+    if (req.method === "HEAD") return res.end();
+    return createReadStream(file, { start: range.start, end: range.end }).pipe(res);
+  }
+
   res.writeHead(200, {
     "content-type": type,
     "content-length": size,
+    "accept-ranges": "bytes",
     "cache-control": "no-cache",
   });
   if (req.method === "HEAD") return res.end();
