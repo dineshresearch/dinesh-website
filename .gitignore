@@ -1,9 +1,12 @@
 node_modules/
 __pycache__/
 tools/screenshots/
+
+# Vercel
+.vercel/
+.env*
+!.env.example
+
 .DS_Store
 Thumbs.db
 *.log
-.vercel
-.env
-.env.local
